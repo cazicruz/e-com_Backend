@@ -7,6 +7,7 @@ const authRoutes = require('./auth');
 const webhookRoutes = require('./webHooks');
 const adminRoutes = require('./admin');
 const productRoutes = require('./product');
+const orderRoutes = require('./order');
 
 /**
  * @swagger
@@ -325,6 +326,7 @@ router.use('/auth', authRoutes);
 router.use('/hooks', webhookRoutes);
 router.use('/admin',adminRoutes);
 router.use('/products', productRoutes);
+router.use('/order',orderRoutes)
 
 
 // 404 handler for API routes

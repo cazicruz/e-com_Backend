@@ -1,7 +1,21 @@
 const Product = require('../models/Products');
 const { ApiError } = require('../utils/apiError');
 const paginate = require('../utils/paginate');
+const {bulkDelete} = require('../utils/algoliaSearch')
 
+const MAX_IMAGES=5
+
+function assertValidId(id) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError('Invalid productId', 400);
+  }
+}
+
+function ensureImagesArray(arr) {
+  const copy = Array.isArray(arr) ? arr.slice(0, MAX_IMAGES) : [];
+  while (copy.length < MAX_IMAGES) copy.push(null);
+  return copy;
+}
 
 /**
  * Creates a new product in the database.
@@ -31,6 +45,7 @@ const createProduct = async (prodObj) => {
 
 
 const updateProduct = async (productId, updateObj) => {
+    assertValidId(productId);
     const product = await Product.findByIdAndUpdate(productId, updateObj, { new: true });
     if (!product) {
         throw new ApiError('Product not found', 404);
@@ -39,6 +54,7 @@ const updateProduct = async (productId, updateObj) => {
 }
 
 const deleteProduct = async (productId) => {
+    assertValidId(productId);
     const product = await Product.findByIdAndDelete(productId);
     if (!product) {
         throw new ApiError('Product not found', 404);
@@ -47,6 +63,7 @@ const deleteProduct = async (productId) => {
 }
 
 const getProductById = async (productId) => {
+    assertValidId(productId);
     const product = await Product.findById(productId);
     if (!product) {
         throw new ApiError('Product not found', 404);
@@ -55,9 +72,6 @@ const getProductById = async (productId) => {
 }
 const getAllProducts = async (filter = {}, options = {}) => {
     const products = await Product.find(filter, null, options);
-    if (!products) {
-        throw new ApiError('No products found', 404);
-    }
     return products;
 }
 const getPaginatedProducts = async (filter = {}, options = {}) => {
@@ -65,51 +79,75 @@ const getPaginatedProducts = async (filter = {}, options = {}) => {
 }
 
 const bulkDeleteProducts = async ( productIds = []) => {
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+        throw new ApiError('productIds must be a non-empty array', 400);
+    }
     const result = await Product.deleteMany({ _id: { $in: productIds } });
     if (result.deletedCount === 0) {
         throw new ApiError('No products found', 404);
     }
+    await bulkDelete(productIds);
+
     return result;
 }
 
 const changeProductStock = async (productId, quantity) => {
-    const product = await Product.findById(productId);
-    if (!product) {
-        throw new ApiError('Product not found', 404);
-    }
-    product.stockQuantity = quantity;
-    await product.save();
+    assertValidId(productId);
+    const product = await Product.findByIdAndUpdate(
+    productId,
+    { $set: { stockQuantity: quantity } },
+    { new: true, runValidators: true }
+  );
+  if (!product) throw new ApiError('Product not found', 404);
     return product;
 }
 
 const changeProductPopularity = async (productId, popularity) => {
-    const product = await Product.findById(productId);
-    if (!product) {
-        throw new ApiError('Product not found', 404);
-    }
-    product.popularity = popularity;
-    await product.save();
-    return product;
+    assertValidId(productId);
+    const updated = await Product.findByIdAndUpdate(
+        productId,
+        { $set: { popularity } },
+        { new: true, runValidators: true }
+    );
+    if (!updated) throw new ApiError('Product not found', 404);
+    return updated;
 }
 
+// Replace the whole images array
 const updateProductImages = async (productId, images) => {
-    const product = await Product.findById(productId);
-    if (!product) {
-        throw new ApiError('Product not found', 404);
+    assertValidId(productId);
+    if (!Array.isArray(images) || images.length > MAX_IMAGES) {
+        throw new ApiError(`images must be an array with max ${MAX_IMAGES} items`, 400);
     }
-    product.images = images;
-    await product.save();
-    return product;
+    const updated = await Product.findByIdAndUpdate(
+        productId,
+        { $set: { images } },
+        { new: true, runValidators: true }
+    );
+    if (!updated) throw new ApiError('Product not found', 404);
+    return updated;
 }
 
 const fillTheBlankImages = async (productId,images, index) => {
+    assertValidId(productId);
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_IMAGES) {
+        throw new ApiError('Invalid index', 400);
+    }
+    if (!Array.isArray(images) || images.length === 0) {
+        throw new ApiError('images must be a non-empty array', 400);
+    }
+    if (images.length > MAX_IMAGES) {
+        throw new ApiError(`images array must be <= ${MAX_IMAGES}`, 400);
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
         throw new ApiError('Product not found', 404);
     }
+    const imgs=images.slice();
     for(let i=index; i<5; i++){
-        if(images.length >0){
-            product.images[i] = images.shift();
+        if(imgs.length >0){
+            product.images[i] = imgs.shift();
         }
     }
     await product.save();
@@ -117,6 +155,10 @@ const fillTheBlankImages = async (productId,images, index) => {
 }
 
 const updateImageAtIndex = async (productId, imageUrl, index) => {
+    assertValidId(productId);
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_IMAGES) {
+        throw new ApiError('Invalid index', 400);
+    }
     const product = await Product.findById(productId);
     if (!product) {
         throw new ApiError('Product not found', 404);
@@ -127,14 +169,15 @@ const updateImageAtIndex = async (productId, imageUrl, index) => {
 }
 
 const updateImages = async (productId,images,index) => {
-    if(index >5) throw new ApiError('Index out of bounds', 400);
+    assertValidId(productId);
+    if(index >4) throw new ApiError('Index out of bounds', 400);
 
-    if(index && images !== undefined){
+    if((index !== undefined && index !== null) && images !== undefined){
         console.log("entered here");
         if( Array.isArray(images) === false ){
             return await updateImageAtIndex(productId,images,index);
         }else if(Array.isArray(images) === true && images.length <= 5){
-            fillTheBlankImages(productId,images,index);
+            return await fillTheBlankImages(productId,images,index);
         }else{
         throw new ApiError('Invalid  index for image', 400);
         }
@@ -148,12 +191,15 @@ const updateImages = async (productId,images,index) => {
 }
 
 const incrementProductPopularity = async (productId, incrementBy = 1) => {
-    const product = await Product.findById(productId);
+    assertValidId(productId);
+    const product = await Product.findByIdAndUpdate(
+        productId,
+        { $inc: { popularity: incrementBy } },
+        { new: true }
+    );
     if (!product) {
         throw new ApiError('Product not found', 404);
     }
-    product.popularity += incrementBy;
-    await product.save();
     return product;
 }
 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const {algoliaQueue} = require('../jobs/algoliaQueue');
 
 const productSchema = new mongoose.Schema({
     name: {
@@ -36,5 +37,26 @@ const productSchema = new mongoose.Schema({
     popularity: { type: Number, default: 0 },
     isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
+
+
+// after save (create or update)
+productSchema.post("save", async function (doc) {
+  await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
+});
+
+// after findOneAndUpdate
+productSchema.post("findOneAndUpdate", async function (doc) {
+  if (doc) {
+    await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
+  }
+});
+
+// after delete
+productSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    await algoliaQueue.add("delete", { id: doc._id.toString() });
+  }
+});
+
 
 module.exports = mongoose.model('Product', productSchema);
