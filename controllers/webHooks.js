@@ -5,6 +5,7 @@ const User = require('../models/User');
 // const {ValidateTransferRequest} = require('../services/walletService')
 const catchAsync = require('../utils/catchAsync');
 const apiError = require('../utils/apiError');
+const {updateOrderStatus} = require('../services/orderService')
 
 const secret = process.env.WEBHOOK_SECRET_KEY;
 
@@ -128,7 +129,7 @@ const validatePaystackSignature = (req) => {
 //   }
 // };
 
-const transactionHook = async (req, res) => {
+const transactionHook = catchAsync(async (req, res) => {
   try {
     if (!validatePaystackSignature(req)) {
       return res.status(401).json({ message: 'Invalid signature' });
@@ -136,8 +137,9 @@ const transactionHook = async (req, res) => {
 
     const { event, data } = req.body;
 
-    if (event === 'charge.success' && data.metadata?.purpose === 'wallet_funding') {
+    if (event === 'charge.success' && data.metadata?.purpose === 'Order_Payment') {
       const userId = data.metadata.userId;
+      const orderId= data.matadata.orderId
       const amount = data.amount / 100;
 
       if (!userId) {
@@ -145,13 +147,7 @@ const transactionHook = async (req, res) => {
         return res.status(400).json({ message: 'Missing userId' });
       }
 
-      await processWalletFunding({
-        userId,
-        amount,
-        reference: data.reference,
-        data,
-        message: 'Payment Successful'
-      });
+      await updateOrderStatus(orderId,'shipped',amount)
     }
 
     res.sendStatus(200);
@@ -159,24 +155,24 @@ const transactionHook = async (req, res) => {
     console.error('❌ Transaction Hook Error:', err.message || err);
     res.sendStatus(500);
   }
-};
+});
 
-const transferApprovalHook = catchAsync(async (req, res)=>{
-  if (!validatePaystackSignature(req)) {
-    return res.status(400).json({ message: 'Invalid signature' });
-  }
-  await ValidateTransferRequest(req.body);
-  try{await Transaction.findOneAndUpdate(
-    { _id: req.body.transactionId },
-    { resolved: true }
-  );}catch(err){
-    console.error('error updating Transaction record',err.message||err)
-    throw apiError('error updating transaction record', 400,'mongoose error',{})
-  }
-  res.sendStatus(200);
-})
+// const transferApprovalHook = catchAsync(async (req, res)=>{
+//   if (!validatePaystackSignature(req)) {
+//     return res.status(400).json({ message: 'Invalid signature' });
+//   }
+//   await ValidateTransferRequest(req.body);
+//   try{await Transaction.findOneAndUpdate(
+//     { _id: req.body.transactionId },
+//     { resolved: true }
+//   );}catch(err){
+//     console.error('error updating Transaction record',err.message||err)
+//     throw apiError('error updating transaction record', 400,'mongoose error',{})
+//   }
+//   res.sendStatus(200);
+// })
 
 module.exports = {
   transactionHook,
-  transferApprovalHook
+  // transferApprovalHook
 };

@@ -25,7 +25,21 @@ const options = {
       {
         url: 'https://caspay.onrender.com/api',
         description: 'Production server'
-      }
+      },
+      {
+        url: 'https://caspay.onrender.com/api',
+        description: 'Production server'
+      },
+      {
+        images: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary'
+        },
+        description: "Multiple image files (use key 'images' for each file in form-data)",
+        maxItems: 5
+      }}
     ],
     components: {
       securitySchemes: {
@@ -92,35 +106,6 @@ const options = {
             email: { type: 'string', format: 'email', example: 'john.doe@example.com' }
           }
         },
-        Transaction: {
-          type: 'object',
-          properties: {
-            _id: { type: 'string', example: '507f1f77bcf86cd799439012' },
-            transactionId: { type: 'string', example: 'TXN1234567890ABCDEF' },
-            type: { 
-              type: 'string', 
-              enum: ['airtime', 'data', 'cable_tv', 'electricity', 'wallet_funding', 'wallet_withdrawal'],
-              example: 'airtime'
-            },
-            service: { type: 'string', example: 'mtn_airtime' },
-            provider: { type: 'string', example: 'VTPass' },
-            amount: { type: 'number', example: 1000 },
-            fee: { type: 'number', example: 25 },
-            totalAmount: { type: 'number', example: 1025 },
-            status: { 
-              type: 'string', 
-              enum: ['pending', 'processing', 'successful', 'failed', 'cancelled'],
-              example: 'successful'
-            },
-            paymentMethod: { 
-              type: 'string', 
-              enum: ['wallet', 'card', 'bank_transfer', 'ussd'],
-              example: 'wallet'
-            },
-            createdAt: { type: 'string', format: 'date-time' },
-            completedAt: { type: 'string', format: 'date-time' }
-          }
-        },
         Error: {
           type: 'object',
           properties: {
@@ -176,8 +161,8 @@ const options = {
         description: 'User authentication and authorization endpoints'
       },
       {
-        name: 'VTU Services',
-        description: 'Virtual Top-Up services (airtime, data, cable TV, electricity)'
+        name: 'Product',
+        description: 'Product management and catalog endpoints'
       },
       {
         name: 'Wallet',
@@ -192,7 +177,8 @@ const options = {
   apis: [
     './routes/api/*.js',
     './controllers/*.js',
-    './models/*.js'
+    './models/*.js',
+    './docs/*.js' 
   ]
 };
 

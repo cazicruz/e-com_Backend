@@ -129,11 +129,14 @@ const updateImageAtIndex = async (productId, imageUrl, index) => {
 const updateImages = async (productId,images,index) => {
     if(index >5) throw new ApiError('Index out of bounds', 400);
 
-    if(index !== undefined && images !== undefined){
+    if(index && images !== undefined){
+        console.log("entered here");
         if( Array.isArray(images) === false ){
             return await updateImageAtIndex(productId,images,index);
         }else if(Array.isArray(images) === true && images.length <= 5){
             fillTheBlankImages(productId,images,index);
+        }else{
+        throw new ApiError('Invalid  index for image', 400);
         }
     }
     else if(images !== undefined && Array.isArray(images) === true && images.length <= 5){

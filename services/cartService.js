@@ -1,0 +1,123 @@
+const cart = require('../models/Cart');
+const product = require('../models/Product');
+
+// Add item to cart
+async function addItemToCart(userId, productId, quantity) {
+    let userCart = await cart.findOne({ userId });
+    if (!userCart) {
+        userCart = new cart({ userId, items: [] });
+    }
+    const existingItem = userCart.items.find(item => item.productId.equals(productId));
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        userCart.items.push({ productId, quantity });
+    }
+    await userCart.save();
+    return userCart;
+}
+
+async function removeItemFromCart(userId, productId) {
+    const userCart = await cart.findOne({ userId });
+    if (!userCart) throw new Error('Cart not found');
+    userCart.items = userCart.items.filter(item => !item.productId.equals(productId));
+    await userCart.save();
+    return userCart;
+}
+
+/**
+ * Clears the user's cart.
+ * Works standalone or inside a transaction if `session` is passed.
+ *
+ * @param {String} userId - The ID of the user
+ * @param {Object} [session] - Optional Mongoose session for transactions
+ * @returns {Promise<Object>} The updated cart document
+ */
+export async function clearCart(userId, session = null) {
+  const queryOptions = session ? { session } : {};
+
+  const userCart = await cart.findOne({ userId }, queryOptions);
+  if (!userCart) {
+    throw new Error('Cart not found');
+  }
+  userCart.items = [];
+  await userCart.save(queryOptions);
+  return userCart;
+}
+
+async function getCart(userId) {
+    const userCart = await cart.findOne({ userId }).populate('items.productId');
+    if (!userCart) throw new Error('Cart not found');
+    return userCart;
+}
+
+async function updateItemQuantity(userId, productId, quantity) {
+    const userCart = await cart.findOne({ userId });
+    if (!userCart) throw new Error('Cart not found');
+    const item = userCart.items.find(item => item.productId.equals(productId));
+    if (!item) throw new Error('Item not found in cart');
+    item.quantity = quantity;
+    await userCart.save();
+    return userCart;
+}
+
+
+// services/cartService.js
+const Cart = require('../models/Cart');
+const Product = require('../models/Products'); // adjust path
+const { deliveryMethod } = require('../models/Order'); // reuse your delivery constants
+
+/**
+ * Calculate totals from a user's cart
+ * @param {ObjectId} userId
+ * @param {Object} options
+ * @param {String} options.deliveryType - 'home_delivery' or 'store_pickup'
+ * @param {String} options.deliveryMethod - 'standard' or 'express'
+ * @param {Number} options.taxRate - e.g. 0.075 for 7.5%
+ * @returns {Object} { subtotal, tax, deliveryFee, total }
+ */
+async function calculateCartTotals(userId, options = {}) {
+  const { deliveryType = 'home_delivery', deliveryMethod: method = 'standard', taxRate = 0 } = options;
+
+  // Fetch user cart with populated product prices
+  const cart = await Cart.findOne({ userId }).populate('items.productId', 'price');
+  if (!cart) throw new Error('Cart not found');
+
+  // Subtotal = Σ (price × quantity)
+  let subtotal = 0;
+  for (const item of cart.items) {
+    if (!item.productId) {
+      throw new Error(`Product not found for item: ${item._id}`);
+    }
+    subtotal += item.productId.price * item.quantity;
+  }
+
+  // Tax
+  const tax = subtotal * taxRate;
+
+  // Delivery Fee
+  let deliveryFee = 0;
+  if (deliveryType === 'home_delivery') {
+    deliveryFee = deliveryMethod[method.toUpperCase()]?.cost || 0;
+  }
+
+  // Final Total
+  const total = subtotal + tax + deliveryFee;
+
+  return {
+    subtotal,
+    tax,
+    deliveryFee,
+    total,
+  };
+}
+
+
+module.exports = {
+    addItemToCart,
+    removeItemFromCart,
+    clearCart,
+    getCart,
+    updateItemQuantity,
+    calculateCartTotals
+};

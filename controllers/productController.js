@@ -1,39 +1,73 @@
-const {createProduct, updateProduct, deleteProduct, getProductById, getPaginatedProducts, getAllProducts, bulkDeleteProducts, changeProductStock, changeProductPopularity, updateProductImages, updateImageAtIndex} = require('../services/productService');
+const {createProduct, updateProduct, deleteProduct, getProductById, getPaginatedProducts, getAllProducts, bulkDeleteProducts, changeProductStock, changeProductPopularity, updateProductImages, updateImages} = require('../services/productService');
 const { ApiError } = require('../utils/apiError');
 const cloudinary = require('../config/cloudinary');
 const upload = require('../config/multer');
 const catchAsync = require('../utils/catchAsync');
+const streamifier = require('streamifier');
+
+const CloudinaryUploads = async (files) => {
+  return await Promise.all(
+    files.map(file => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+
+        // Pipe the buffer into Cloudinary
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+    })
+  );
+};
 
 
-const cloudinaryUploads = async (files) => {
-    return await Promise.all(
-        files.map(file => cloudinary.uploader.upload(file.path, { folder: 'products' }))
-    );
-}
 
 
 const createProductController = catchAsync(async (req, res) => {
-    const cloudinaryUploads =  await cloudinaryUploads(req.files);
-
-    const prodObj = {
-        name: req.body.name,
-        description: req.body.description,
-        price: req.body.price,
-        categories: req.body.categories ? JSON.parse(req.body.categories) : [],
-        stock: req.body.stock || 0,
-        images: cloudinaryUploads ? cloudinaryUploads.map(upload => upload.secure_url) : [],
-        brand: req.body.brand || '',
-        length: req.body.length ? JSON.parse(req.body.length) : {},
-        color: req.body.color || '',
-        popularity: req.body.popularity || 0
+    if (!req.files || req.files.length === 0) {
+        throw new ApiError('At least one image is required', 400);
     }
-    const product = await createProduct(prodObj);
-    res.status(201).json({
-        status: 'success',
-        data: {
-            product
+    const cloudinaryUploads =  await CloudinaryUploads(req.files);
+        console.log(cloudinaryUploads);
+    if (!cloudinaryUploads || cloudinaryUploads.length === 0) {
+        throw new ApiError('Image upload failed', 400);
+    }
+    try{
+        const prodObj = {
+            name: req.body.name,
+            description: req.body.description,
+            price: req.body.price,
+            categories: req.body.categories ? JSON.parse(req.body.categories) : [],
+            stock: req.body.stock || 0,
+            images: cloudinaryUploads ? cloudinaryUploads.map(upload => upload.secure_url) : [],
+            brand: req.body.brand || '',
+            length: req.body.length ? JSON.parse(req.body.length) : {},
+            color: req.body.color || '',
+            popularity: req.body.popularity || 0
         }
-    }); 
+        const product = await createProduct(prodObj);
+        res.status(201).json({
+            status: 'success',
+            data: {
+                product
+            }
+        }); 
+    }catch(err){
+        await Promise.allSettled(
+        (cloudinaryUploads || []).map(upload =>
+            cloudinary.uploader.destroy(upload.public_id)
+        )
+        );
+        console.log(err);
+        res.status(400).json({
+            status: 'error',
+            message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+        });
+    }
 })
 
 
@@ -49,7 +83,7 @@ const updateProductController = catchAsync(async (req, res) => {
         if (!updateObj.images) updateObj.images = [];
         else updateObj.images = JSON.parse(updateObj.images);
         
-        cloudinaryUploads = await cloudinaryUploads(req.files);
+        cloudinaryUploads = await CloudinaryUploads(req.files);
         updateObj.images.push(...cloudinaryUploads.map(upload => upload.secure_url));
     }
 
@@ -132,16 +166,31 @@ const changeProductPopularityController = catchAsync(async (req, res) => {
 const updateProductImagesController = catchAsync(async (req, res) => {
     const productId = req.params.id;
     const index = req.body.index;
-    const cloudinaryUploads = await Promise.all(
-        req.files.map(file => cloudinary.uploader.upload(file.path, { folder: 'products' }))
-    );
-    const product = await updateImages(productId, cloudinaryUploads, index);
-    res.status(200).json({
-        status: 'success',
-        data: {
-            product
+    const cloudinaryUploads = await CloudinaryUploads(req.files);
+    try{
+        const images = cloudinaryUploads.map(upload => upload.secure_url);
+        const product = await updateImages(productId, images, index);
+        if(!product){
+            throw new ApiError('Error Updating Product Image', 404);
         }
-    });
+        res.status(200).json({
+            status: 'success',
+            data: {
+                product
+            }
+        });
+    }catch(err){
+        await Promise.allSettled(
+        (cloudinaryUploads || []).map(upload =>
+            cloudinary.uploader.destroy(upload.public_id)
+        )
+        );
+        console.log(err);
+        res.status(400).json({
+            status: 'error',
+            message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+        });
+    }
 })
 module.exports = {
     createProductController,

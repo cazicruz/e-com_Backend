@@ -22,12 +22,14 @@ const paystack = axios.create({
  * @param {string} userId
  * @param {string} purpose
  */
-const initiatePayment = async (amount, email, userId, purpose = 'Order_Payment') => {
+const initiatePayment = async (amount, email, userId, orderId, purpose = 'Order_Payment') => {
   const response = await paystack.post('/transaction/initialize', {
     email,
     amount,
+    reference:orderId,
     metadata: {
       userId,
+      orderId,
       purpose
     }
   });

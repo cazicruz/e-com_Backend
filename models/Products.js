@@ -33,7 +33,8 @@ const productSchema = new mongoose.Schema({
         }
     },
     color: String,
-    popularity: { type: Number, default: 0 }
+    popularity: { type: Number, default: 0 },
+    isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

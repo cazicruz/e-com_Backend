@@ -118,50 +118,50 @@ const validateTransactionId = [
 ];
 
 // Validation rules for pagination
-const validatePagination = [
-  query('page')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Page must be a positive integer'),
+// const validatePagination = [
+//   query('page')
+//     .optional()
+//     .isInt({ min: 1 })
+//     .withMessage('Page must be a positive integer'),
   
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
+//   query('limit')
+//     .optional()
+//     .isInt({ min: 1, max: 100 })
+//     .withMessage('Limit must be between 1 and 100'),
   
-  query('status')
-    .optional()
-    .isIn(['pending', 'processing', 'successful', 'failed', 'cancelled'])
-    .withMessage('Invalid status filter'),
+//   query('status')
+//     .optional()
+//     .isIn(['pending', 'processing', 'successful', 'failed', 'cancelled'])
+//     .withMessage('Invalid status filter'),
   
-  query('type')
-    .optional()
-    .isIn(['airtime', 'data', 'cable_tv', 'electricity', 'wallet_funding', 'wallet_withdrawal'])
-    .withMessage('Invalid transaction type'),
+//   query('type')
+//     .optional()
+//     .isIn(['airtime', 'data', 'cable_tv', 'electricity', 'wallet_funding', 'wallet_withdrawal'])
+//     .withMessage('Invalid transaction type'),
   
-  handleValidationErrors
-];
+//   handleValidationErrors
+// ];
 
 // Validation rules for date range
-const validateDateRange = [
-  query('startDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Start date must be a valid ISO date'),
+// const validateDateRange = [
+//   query('startDate')
+//     .optional()
+//     .isISO8601()
+//     .withMessage('Start date must be a valid ISO date'),
   
-  query('endDate')
-    .optional()
-    .isISO8601()
-    .withMessage('End date must be a valid ISO date')
-    .custom((value, { req }) => {
-      if (req.query.startDate && new Date(value) < new Date(req.query.startDate)) {
-        throw new Error('End date must be after start date');
-      }
-      return true;
-    }),
+//   query('endDate')
+//     .optional()
+//     .isISO8601()
+//     .withMessage('End date must be a valid ISO date')
+//     .custom((value, { req }) => {
+//       if (req.query.startDate && new Date(value) < new Date(req.query.startDate)) {
+//         throw new Error('End date must be after start date');
+//       }
+//       return true;
+//     }),
   
-  handleValidationErrors
-];
+//   handleValidationErrors
+// ];
 
 module.exports = {
   handleValidationErrors,
@@ -170,7 +170,7 @@ module.exports = {
   validatePasswordReset,
   validatePasswordChange,
   validateProfileUpdate,
-  validateTransactionId,
-  validatePagination,
-  validateDateRange
+  // validateTransactionId,
+  // validatePagination,
+  // validateDateRange
 }; 
