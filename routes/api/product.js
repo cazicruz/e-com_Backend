@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../../config/multer');
+const {validateProduct,
+    validateStock,
+    validatePopularity,
+    validateImages,
+} = require("../../middleware/validations/productValidation");
+const {
+  idParamValidator,
+  bulkIdsValidator,
+} = require("../../middleware/validations/idValidation");
 const {
     createProductController,
     updateProductController,
@@ -12,15 +21,15 @@ const {
     changeProductPopularityController,
     updateProductImagesController} = require('../../controllers/productController');
 
-    router.post('/', upload.array('images'), createProductController);
-    router.put('/:id', upload.array('images'), updateProductController);
-    router.delete('/:id', deleteProductController);
-    router.get('/:id', getProductByIdController);
+    router.post('/', upload.array('images'),validateProduct, createProductController);
     router.get('/', getAllProductsController);
     router.delete('/bulk', bulkDeleteProductsController);
-    router.patch('/:id/stock', changeProductStockController);
-    router.patch('/:id/popularity', changeProductPopularityController);
-    router.patch('/:id/images', upload.array('images'), updateProductImagesController);
+    router.put('/:id', upload.array('images'),validateProduct, updateProductController);
+    router.delete('/:id',idParamValidator, deleteProductController);
+    router.get('/:id',idParamValidator, getProductByIdController);
+    router.patch('/:id/stock',validateStock, changeProductStockController);
+    router.patch('/:id/popularity',validatePopularity, changeProductPopularityController);
+    router.patch('/:id/images',idParamValidator, upload.array('images'),validateImages, updateProductImagesController);
 
 module.exports = router;
 

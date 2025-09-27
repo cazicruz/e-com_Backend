@@ -108,14 +108,7 @@ const validateProfileUpdate = [
   handleValidationErrors
 ];
 
-// Validation rules for transaction ID
-const validateTransactionId = [
-  param('transactionId')
-    .matches(/^TXN\d{13}[A-Z0-9]{9}$/)
-    .withMessage('Invalid transaction ID format'),
-  
-  handleValidationErrors
-];
+
 
 // Validation rules for pagination
 // const validatePagination = [

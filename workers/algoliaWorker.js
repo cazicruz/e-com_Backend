@@ -2,7 +2,7 @@
 import { Worker } from "bullmq";
 const IORedis = require("ioredis");
 // const {connection} =require('../jobs/algoliaQueue')
-import { addOrUpdateProduct, deleteProduct } from "../utils/algoliaSearch";
+import { addOrUpdateProduct, deleteProduct ,bulkDelete} from "../utils/algoliaSearch";
 
 const connection = new IORedis({
   host: process.env.REDIS_HOST,
@@ -20,6 +20,10 @@ const worker = new Worker(
 
     if (job.name === "delete") {
       await deleteProduct(job.data.id);
+    }
+
+    if (job.name === "deleteMany") {
+        await bulkDelete(job.data.ids);
     }
   },
   { connection }

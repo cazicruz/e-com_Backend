@@ -25,8 +25,8 @@ async function bulkDelete(productIds) {
 }
 
 
-module.exports={
+module.exports= {
     addOrUpdateProduct,
     deleteProduct,
-    bulkDelete
+    bulkDelete,
 }

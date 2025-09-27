@@ -41,13 +41,22 @@ const productSchema = new mongoose.Schema({
 
 // after save (create or update)
 productSchema.post("save", async function (doc) {
-  await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
+    if (doc.isDeleted) {
+      await algoliaQueue.add("delete", { id: doc._id.toString() });
+    } else {
+      await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
+    }
+//   await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
 });
 
 // after findOneAndUpdate
 productSchema.post("findOneAndUpdate", async function (doc) {
   if (doc) {
-    await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
+    if (doc.isDeleted) {
+      await algoliaQueue.add("delete", { id: doc._id.toString() });
+    } else {
+      await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
+    }
   }
 });
 
@@ -58,5 +67,31 @@ productSchema.post("findOneAndDelete", async function (doc) {
   }
 });
 
+productSchema.pre("deleteOne", { document: false, query: true }, async function (next) {
+  this._docToDelete = await this.model.findOne(this.getFilter(), "_id").lean();
+  next();
+});
+
+productSchema.post("deleteOne", async function () {
+  if (this._docToDelete) {
+    await algoliaQueue.add("delete", { id: this._docToDelete._id.toString() });
+  }
+});
+
+
+// Bulk delete middleware
+productSchema.pre("deleteMany", async function (next) {
+  // "this" refers to the query
+  this._docsToDelete = await this.model.find(this.getFilter(), "_id").lean();
+  next();
+});
+
+productSchema.post("deleteMany", async function () {
+  if (this._docsToDelete?.length) {
+    const ids = this._docsToDelete.map(d => d._id.toString());
+    await algoliaQueue.add("deleteMany",{ids});
+    console.log(`🗑️ Deleted ${ids.length} products from Algolia`);
+  }
+});
 
 module.exports = mongoose.model('Product', productSchema);
