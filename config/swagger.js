@@ -165,8 +165,8 @@ const options = {
         description: 'Product management and catalog endpoints'
       },
       {
-        name: 'Wallet',
-        description: 'Wallet management and transactions'
+        name: 'Orders',
+        description: 'Order management and payments'
       },
       {
         name: 'Health',

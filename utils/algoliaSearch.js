@@ -1,10 +1,11 @@
-import algoliasearch from "algoliasearch";
+const algoliasearch = require('algoliasearch');
 
 const client = algoliasearch(
     process.env.ALGOLIA_APP_ID,
     process.env.ALGOLIA_ADMIN_API_KEY);
     
-const productIndex = client.initIndex("products");
+const indexName = `products_${process.env.NODE_ENV}`;
+const productIndex = client.initIndex(indexName);
 
 async function addOrUpdateProduct(product) {
   const record = {

@@ -1,12 +1,12 @@
 // workers/algoliaWorker.ts
-import { Worker } from "bullmq";
+const { Worker }= reqiure("bullmq");
 const IORedis = require("ioredis");
 // const {connection} =require('../jobs/algoliaQueue')
-import { addOrUpdateProduct, deleteProduct ,bulkDelete} from "../utils/algoliaSearch";
+const { addOrUpdateProduct, deleteProduct ,bulkDelete}= require("../utils/algoliaSearch");
 
 const connection = new IORedis({
   host: process.env.REDIS_HOST,
-  port: process.env.REDIS_POST,
+  port: process.env.REDIS_PORT,
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
 });

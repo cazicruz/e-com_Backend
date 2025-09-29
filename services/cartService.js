@@ -1,9 +1,16 @@
-const cart = require('../models/Cart');
-const product = require('../models/Product');
+const Cart = require('../models/Cart');
+const Product = require('../models/Products');
+const { ApiError } = require('../utils/apiError');
+const { deliveryMethod } = require('../models/Order'); 
+
+
 
 // Add item to cart
 async function addItemToCart(userId, productId, quantity) {
-    let userCart = await cart.findOne({ userId });
+    let validProduct= await Product.find({id:productId})
+    if(!validProduct)throw new ApiError('ivalid Product',404)
+        
+    let userCart = await Cart.findOne({ userId });
     if (!userCart) {
         userCart = new cart({ userId, items: [] });
     }
@@ -18,7 +25,7 @@ async function addItemToCart(userId, productId, quantity) {
 }
 
 async function removeItemFromCart(userId, productId) {
-    const userCart = await cart.findOne({ userId });
+    const userCart = await Cart.findOne({ userId });
     if (!userCart) throw new Error('Cart not found');
     userCart.items = userCart.items.filter(item => !item.productId.equals(productId));
     await userCart.save();
@@ -33,10 +40,10 @@ async function removeItemFromCart(userId, productId) {
  * @param {Object} [session] - Optional Mongoose session for transactions
  * @returns {Promise<Object>} The updated cart document
  */
-export async function clearCart(userId, session = null) {
+async function clearCart(userId, session = null) {
   const queryOptions = session ? { session } : {};
 
-  const userCart = await cart.findOne({ userId }, queryOptions);
+  const userCart = await Cart.findOne({ userId }, queryOptions);
   if (!userCart) {
     throw new Error('Cart not found');
   }
@@ -46,13 +53,13 @@ export async function clearCart(userId, session = null) {
 }
 
 async function getCart(userId) {
-    const userCart = await cart.findOne({ userId }).populate('items.productId');
+    const userCart = await Cart.findOne({ userId }).populate('items.productId');
     if (!userCart) throw new Error('Cart not found');
     return userCart;
 }
 
 async function updateItemQuantity(userId, productId, quantity) {
-    const userCart = await cart.findOne({ userId });
+    const userCart = await Cart.findOne({ userId });
     if (!userCart) throw new Error('Cart not found');
     const item = userCart.items.find(item => item.productId.equals(productId));
     if (!item) throw new Error('Item not found in cart');
@@ -61,11 +68,6 @@ async function updateItemQuantity(userId, productId, quantity) {
     return userCart;
 }
 
-
-// services/cartService.js
-const Cart = require('../models/Cart');
-const Product = require('../models/Products'); // adjust path
-const { deliveryMethod } = require('../models/Order'); // reuse your delivery constants
 
 /**
  * Calculate totals from a user's cart
