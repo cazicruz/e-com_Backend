@@ -169,6 +169,10 @@ const options = {
         description: 'Order management and payments'
       },
       {
+        name: 'Cart',
+        description: 'Cart management endpoints'
+      },
+      {
         name: 'Health',
         description: 'API health and status endpoints'
       }

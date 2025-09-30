@@ -1,5 +1,5 @@
 {
-  "name": "B-Classy",
+  "name": "b-classy",
   "version": "1.0.0",
   "description": "B-Classy e-comm Application Backend",
   "private": true,
@@ -10,7 +10,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "africastalking": "^0.7.3",
     "algoliasearch": "^4.25.2",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
