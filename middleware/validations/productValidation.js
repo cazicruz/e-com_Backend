@@ -38,6 +38,16 @@ const validateProduct = [
 
   body("categories")
     .optional()
+    .customSanitizer(value => {
+    if (typeof value === "string") {
+        try {
+            return JSON.parse(value);
+        } catch {
+            return value.split(",").map(v => v.trim());
+        }
+        }
+        return value;
+    })
     .isArray().withMessage("Categories must be an array of strings"),
 
   body("tags")

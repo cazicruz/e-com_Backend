@@ -5,6 +5,8 @@
  *   post:
  *     summary: Create a new order from user's cart
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -32,6 +34,8 @@
  *   post:
  *     summary: Verify a payment transaction
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -53,6 +57,8 @@
  *   get:
  *     summary: Get all orders
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of all orders
@@ -64,6 +70,8 @@
  *   get:
  *     summary: Get an order by ID
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -84,6 +92,8 @@
  *   get:
  *     summary: Get all orders for the logged-in user
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of user's orders
@@ -97,6 +107,8 @@
  *   patch:
  *     summary: Update an order's status
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -126,6 +138,8 @@
  *   patch:
  *     summary: Soft delete an order (mark as deleted)
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -146,6 +160,8 @@
  *   delete:
  *     summary: Hard delete an order
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: id

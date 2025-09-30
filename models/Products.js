@@ -44,6 +44,7 @@ productSchema.post("save", async function (doc) {
     if (doc.isDeleted) {
       await algoliaQueue.add("delete", { id: doc._id.toString() });
     } else {
+        console.log('hitting algolia')
       await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });
     }
 //   await algoliaQueue.add("addOrUpdate", { product: doc.toObject() });

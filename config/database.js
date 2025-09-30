@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const connectDB = async () => {
+const MAX_RETRIES = 10;       // max attempts before giving up
+const RETRY_DELAY = 5000; 
+
+const connectDB = async (retries = 0) => {
   try {
     // Check if MongoDB URI is provided
     const mongoURI = process.env.NODE_ENV === 'production' 
@@ -46,8 +49,41 @@ const connectDB = async () => {
       console.log('   - Ensure the user has proper permissions');
     }
     
-    process.exit(1);
+    if (retries < MAX_RETRIES) {
+      console.log(
+        `🔁 Retrying to connect in ${RETRY_DELAY / 1000}s... (attempt ${
+          retries + 1
+        }/${MAX_RETRIES})`
+      );
+      setTimeout(() => connectDB(retries + 1), RETRY_DELAY);
+    } else {
+      console.error('🚨 Max retries reached. Exiting process.');
+      process.exit(1);
+    }
   }
 };
+
+// 🔌 Event listeners
+mongoose.connection.on('connected', () => {
+  console.log('🟢 MongoDB connected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error(`🔴 MongoDB error: ${err.message}`);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('🟠 MongoDB disconnected');
+  console.log(`🔁 Trying to reconnect in ${RETRY_DELAY / 1000}s...`);
+  setTimeout(connectDB, RETRY_DELAY);
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('🟢 MongoDB reconnected');
+});
+
+mongoose.connection.on('close', () => {
+  console.warn('⚠️ MongoDB connection closed');
+});
 
 module.exports = connectDB; 

@@ -2,6 +2,7 @@ const Product = require('../models/Products');
 const { ApiError } = require('../utils/apiError');
 const paginate = require('../utils/paginate');
 const {bulkDelete} = require('../utils/algoliaSearch')
+const mongoose = require('mongoose');
 
 const MAX_IMAGES=5
 

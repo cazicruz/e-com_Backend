@@ -21,7 +21,9 @@
  *                 type: number
  *                 example: 19.99
  *               categories:
- *                 type: string
+ *                 type: array
+ *                 items:
+ *                   type: string
  *                 description: JSON array string, e.g. '["clothing","summer"]'
  *               stock:
  *                 type: integer
@@ -30,8 +32,15 @@
  *                 type: string
  *                 example: "Nike"
  *               length:
- *                 type: string
- *                 description: 'JSON object string, e.g. {"value": 10, "unit": "inches"}'
+ *                 type: object
+ *                 properties:
+ *                   value:
+ *                     type: number
+ *                   unit:
+ *                     type: string
+ *                 example:
+ *                   value: 10
+ *                   unit: "inches"
  *               color:
  *                 type: string
  *                 example: "red"

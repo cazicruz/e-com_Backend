@@ -41,7 +41,7 @@ const createProductController = catchAsync(async (req, res) => {
             name: req.body.name,
             description: req.body.description,
             price: req.body.price,
-            categories: req.body.categories ? JSON.parse(req.body.categories) : [],
+            categories: req.body.categories ? req.body.categories : [],
             stock: req.body.stock || 0,
             images: cloudinaryUploads ? cloudinaryUploads.map(upload => upload.secure_url) : [],
             brand: req.body.brand || '',

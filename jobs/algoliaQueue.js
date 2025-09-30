@@ -10,5 +10,7 @@ const connection = new IORedis({
 });
 
 const algoliaQueue = new Queue("algolia-sync", { connection });
+console.log("Job added:", algoliaQueue.id);
+
 
 module.exports = { algoliaQueue,connection };
