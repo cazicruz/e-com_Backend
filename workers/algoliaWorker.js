@@ -4,6 +4,10 @@ require('dotenv').config();
 const IORedis = require("ioredis");
 // const {connection} =require('../jobs/algoliaQueue')
 const { addOrUpdateProduct, deleteProduct ,bulkDelete}= require("../utils/algoliaSearch");
+const host=process.env.REDIS_HOST
+const port=process.env.REDIS_PORT
+
+console.log(host,port);
 
 const connection = new IORedis({
   host: process.env.REDIS_HOST,
@@ -49,7 +53,7 @@ const worker = new Worker(
 
 
 worker.on('ready', () => {
-  console.log('🚀 Algolia worker is ready and listening for jobs...');
+console.log('🚀 Algolia worker is ready and listening for jobs...');
 });
 
 worker.on("completed", (job) => {
@@ -62,7 +66,7 @@ worker.on("failed", (job, err) => {
 
 // Graceful shutdown handlers
 const shutdown = async () => {
-  console.log('🛑 Shutting down worker...');
+console.log('🛑 Shutting down worker...');
   console.log('⏳ Waiting for active jobs to complete...');
   await worker.close();
   console.log('✅ All jobs completed, closing Redis connection...');

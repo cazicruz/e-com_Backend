@@ -15,13 +15,13 @@ async function createOrderFromCart(userId, orderDetails, initiatePaymentFn) {
       .session(session);
 
     if (!userCart || userCart.items.length === 0) {
-      throw new ApiError(400, 'Cart is empty');
+      throw new ApiError('Cart is empty',404);
     }
 
     // 2. Calculate cart totals (pass options if needed, e.g. deliveryType)
     const totals = await calculateCartTotals(userId, orderDetails);
     if (!totals) {
-      throw new ApiError(400, 'Failed to calculate cart totals');
+      throw new ApiError('Failed to calculate cart totals',400);
     }
 
     // 3. Create the order (attach subtotal, tax, deliveryFee, total explicitly)
@@ -51,9 +51,9 @@ async function createOrderFromCart(userId, orderDetails, initiatePaymentFn) {
     await userCart.save({ session });
 
     // 5. Initiate payment if function provided
-    let paymentLink;
+    let paymentDetails=null;
     if (initiatePaymentFn) {
-      paymentLink = await initiatePaymentFn(
+      paymentDetails = await initiatePaymentFn(
         order.totalAmount * 100, // convert to kobo
         order.contactInfo.email,
         userId,
@@ -61,12 +61,19 @@ async function createOrderFromCart(userId, orderDetails, initiatePaymentFn) {
       );
     }
 
-    order.paymentLink = paymentLink;
+    order.paymentDetails = {
+      paymentLink:paymentDetails.authorization_url,
+      reference:paymentDetails.reference,
+      accessCode:paymentDetails.access_code
+    };
     await order.save({ session });
 
     // 5. Commit transaction
     await session.commitTransaction();
-    return { order, paymentLink };
+    return { 
+      order, 
+      paymentLink:paymentDetails?.authorization_url ||null 
+    };
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -76,31 +83,32 @@ async function createOrderFromCart(userId, orderDetails, initiatePaymentFn) {
 }
 
 async function updateOrderStatus(orderId, newStatus,amount) {
-    const validStatuses = ['pending', 'shipped', 'delivered', 'canceled'];
+    const validStatuses = ['pending', 'shipping', 'delivered', 'canceled'];
 
     if (!validStatuses.includes(newStatus)) {
-        throw new ApiError(400, 'Invalid order status');
+        throw new ApiError('Invalid order status',400);
     }
 
     const order = await Order.findById(orderId);
     if (!order) {
-        throw new ApiError(404, 'Order not found');
+        throw new ApiError('Order not found',404);
     }
     if (amount && amount< order.totalAmount) {
-        throw new ApiError(400, 'Amount mis-match');
+        throw new ApiError('Amount mis-match',400);
     }
     if(order.status === newStatus){
         return
     }
 
     order.status = newStatus;
+    order.paymentDetails.status=(newStatus==="shipping")?'paid':"awaiting payment";
     await order.save();
 }
 
 async function getOrderById(orderId) {
     const order = await Order.findById(orderId).populate('items.productId');
     if (!order) {
-        throw new ApiError(404, 'Order not found');
+        throw new ApiError('Order not found',404);
     }
     return order;
 }
@@ -108,7 +116,7 @@ async function getOrderById(orderId) {
 async function getUserOrders(userId) {
     const orders = await Order.find({ userId, isDeleted: false })
     if (!orders || orders.length === 0) {
-        throw new ApiError(404, 'No orders found for this user');
+        throw new ApiError('No orders found for this user', 404);
     }
     return orders;
 }
@@ -121,7 +129,7 @@ async function getAllOrders() {
 async function deleteOrder(orderId) {
     const order = await Order.findByIdAndDelete(orderId);
     if (!order) {
-        throw new ApiError(404, 'Order not found');
+        throw new ApiError('Order not found',404);
     }
     return order;
 }
@@ -129,7 +137,7 @@ async function deleteOrder(orderId) {
 async function softDeleteOrder(orderId) {
     const order = await Order.findById(orderId);
     if (!order) {
-        throw new ApiError(404, 'Order not found');
+        throw new ApiError('Order not found',404);
     }   
     order.isDeleted = true;
     await order.save();

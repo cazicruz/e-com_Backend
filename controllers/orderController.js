@@ -25,7 +25,8 @@ const getOrderById= catchAsync(async(req,res)=>{
 })
 
 const getUserOrders = catchAsync(async(req,res)=>{
-    const orders = await orderServices.getUserOrders(req.user.id);
+    const userId=req.user.id;
+    const orders = await orderServices.getUserOrders(userId);
     res.status(200).json({
         success: true,
         message: 'User\'s Orders retieved Successfully',

@@ -23,11 +23,11 @@ const options = {
         description: 'Development server'
       },
       {
-        url: 'https://caspay.onrender.com/api',
+        url: 'https://e-com-backend-m68j.onrender.com/api',
         description: 'Production server'
       },
       {
-        url: 'https://caspay.onrender.com/api',
+        url: 'https://e-com-backend-m68j.onrender.com/api',
         description: 'Production server'
       },
       {

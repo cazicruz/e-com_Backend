@@ -147,7 +147,7 @@ const transactionHook = catchAsync(async (req, res) => {
         return res.status(400).json({ message: 'Missing userId' });
       }
 
-      await updateOrderStatus(orderId,'shipped',amount)
+      await updateOrderStatus(orderId,'shipping',amount)
     }
 
     res.sendStatus(200);

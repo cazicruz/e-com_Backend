@@ -4,7 +4,9 @@ require('dotenv').config();
 const MAX_RETRIES = 10;       // max attempts before giving up
 const RETRY_DELAY = 5000; 
 
-const connectDB = async (retries = 0) => {
+let currentRetries = 0;  // Track retries globally
+
+const connectDB = async () => {
   try {
     // Check if MongoDB URI is provided
     const mongoURI = process.env.NODE_ENV === 'production' 
@@ -26,10 +28,15 @@ const connectDB = async (retries = 0) => {
       socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
     });
 
+    // Reset retry counter on successful connection
+    currentRetries = 0;
+
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`📊 Database: ${conn.connection.name}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
+    currentRetries++;  // Increment on each failure
+    
     console.error('❌ Database connection error:', error.message);
     
     if (error.message.includes('ECONNREFUSED')) {
@@ -49,13 +56,11 @@ const connectDB = async (retries = 0) => {
       console.log('   - Ensure the user has proper permissions');
     }
     
-    if (retries < MAX_RETRIES) {
+    if (currentRetries < MAX_RETRIES) {
       console.log(
-        `🔁 Retrying to connect in ${RETRY_DELAY / 1000}s... (attempt ${
-          retries + 1
-        }/${MAX_RETRIES})`
+        `🔁 Retrying to connect in ${RETRY_DELAY / 1000}s... (attempt ${currentRetries}/${MAX_RETRIES})`
       );
-      setTimeout(() => connectDB(retries + 1), RETRY_DELAY);
+      setTimeout(() => connectDB(), RETRY_DELAY);
     } else {
       console.error('🚨 Max retries reached. Exiting process.');
       process.exit(1);
@@ -74,8 +79,15 @@ mongoose.connection.on('error', (err) => {
 
 mongoose.connection.on('disconnected', () => {
   console.warn('🟠 MongoDB disconnected');
-  console.log(`🔁 Trying to reconnect in ${RETRY_DELAY / 1000}s...`);
-  setTimeout(connectDB, RETRY_DELAY);
+  
+  if (currentRetries < MAX_RETRIES) {
+    currentRetries++;
+    console.log(`🔁 Trying to reconnect in ${RETRY_DELAY / 1000}s... (attempt ${currentRetries}/${MAX_RETRIES})`);
+    setTimeout(() => connectDB(), RETRY_DELAY);
+  } else {
+    console.error('🚨 Max reconnection retries reached. Exiting process.');
+    process.exit(1);
+  }
 });
 
 mongoose.connection.on('reconnected', () => {
@@ -86,4 +98,4 @@ mongoose.connection.on('close', () => {
   console.warn('⚠️ MongoDB connection closed');
 });
 
-module.exports = connectDB; 
+module.exports = connectDB;

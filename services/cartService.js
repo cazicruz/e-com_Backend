@@ -7,16 +7,22 @@ const { deliveryMethod } = require('../models/Order');
 
 // Add item to cart
 async function addItemToCart(userId, productId, quantity) {
-    let validProduct= await Product.find({id:productId})
+    let validProduct= await Product.findById(productId)
+    console.log(validProduct);
     if(!validProduct)throw new ApiError('ivalid Product',404)
+    if(validProduct.stockQuantity < 1)throw new ApiError('Product out of Stock',422);
         
     let userCart = await Cart.findOne({ userId });
     if (!userCart) {
-        userCart = new cart({ userId, items: [] });
+        userCart = new Cart({ userId, items: [] });
     }
     const existingItem = userCart.items.find(item => item.productId.equals(productId));
     if (existingItem) {
-        existingItem.quantity += quantity;
+      const newQuantity = Number(existingItem.quantity) + Number(quantity);
+      if (newQuantity > validProduct.stockQuantity) {
+        throw new ApiError('Insufficient stock', 422);
+      }
+      existingItem.quantity = newQuantity;
     } else {
         userCart.items.push({ productId, quantity });
     }
@@ -26,7 +32,7 @@ async function addItemToCart(userId, productId, quantity) {
 
 async function removeItemFromCart(userId, productId) {
     const userCart = await Cart.findOne({ userId });
-    if (!userCart) throw new Error('Cart not found');
+    if (!userCart) throw new ApiError('Cart not found', 404);
     userCart.items = userCart.items.filter(item => !item.productId.equals(productId));
     await userCart.save();
     return userCart;
@@ -45,7 +51,7 @@ async function clearCart(userId, session = null) {
 
   const userCart = await Cart.findOne({ userId }, queryOptions);
   if (!userCart) {
-    throw new Error('Cart not found');
+    throw new ApiError('Cart not found', 404);
   }
   userCart.items = [];
   await userCart.save(queryOptions);
@@ -54,15 +60,15 @@ async function clearCart(userId, session = null) {
 
 async function getCart(userId) {
     const userCart = await Cart.findOne({ userId }).populate('items.productId');
-    if (!userCart) throw new Error('Cart not found');
+    if (!userCart) throw new ApiError('Cart not found', 404);
     return userCart;
 }
 
 async function updateItemQuantity(userId, productId, quantity) {
     const userCart = await Cart.findOne({ userId });
-    if (!userCart) throw new Error('Cart not found');
+    if (!userCart) throw new ApiError('Cart not found', 404);
     const item = userCart.items.find(item => item.productId.equals(productId));
-    if (!item) throw new Error('Item not found in cart');
+    if (!item) throw new ApiError('Item not found in cart', 404);
     item.quantity = quantity;
     await userCart.save();
     return userCart;
@@ -83,13 +89,13 @@ async function calculateCartTotals(userId, options = {}) {
 
   // Fetch user cart with populated product prices
   const cart = await Cart.findOne({ userId }).populate('items.productId', 'price');
-  if (!cart) throw new Error('Cart not found');
+  if (!cart) throw new ApiError('Cart not found', 404);
 
   // Subtotal = Σ (price × quantity)
   let subtotal = 0;
   for (const item of cart.items) {
     if (!item.productId) {
-      throw new Error(`Product not found for item: ${item._id}`);
+      throw new ApiError(`Product not found for item: ${item._id}`, 404);
     }
     subtotal += item.productId.price * item.quantity;
   }

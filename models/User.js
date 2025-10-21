@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const {ApiError} = require('../utils/apiError');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -192,18 +193,18 @@ userSchema.statics.findByCredentials = async function(email, password) {
   const user = await this.findOne({ email }).select('+password');
   
   if (!user) {
-    throw new Error('Invalid login credentials');
+    throw new ApiError('Invalid login credentials',401,'INVALID_CREDENTIALS');
   }
   
   if (user.isLocked()) {
-    throw new Error('Account is temporarily locked due to too many failed attempts');
+    throw new ApiError('Account is temporarily locked due to too many failed attempts', 403, 'ACCOUNT_LOCKED');
   }
   
   const isMatch = await user.comparePassword(password);
   
   if (!isMatch) {
     await user.incLoginAttempts();
-    throw new Error('Invalid login credentials');
+    throw new ApiError('Invalid login credentials', 401, 'INVALID_CREDENTIALS');
   }
   
   // Reset login attempts on successful login

@@ -15,7 +15,7 @@ const orderSchema = new mongoose.Schema({
   paymentId: String,
   status: {
     type: String,
-    enum: ['pending', 'shipped', 'delivered', 'canceled'],
+    enum: ['pending', 'shipping', 'delivered', 'canceled'],
     default: 'pending'
   },
   subtotal: {
@@ -58,39 +58,19 @@ const orderSchema = new mongoose.Schema({
     price: Number,
     quantity: { type: Number, required: true, min: 1, default: 1 }
   }],
+  paymentDetails:{
     paymentLink: String,
+    reference:String,
+    accessCode:String,
+    status:{type:String,
+      default:'awaiting payment'
+    }
+  },
   isDeleted: { type: Boolean, default: false }
 },{ timestamps: true });
 
-// orderSchema.pre('save', async function(next) {
-//   try {
-//     const order = this;
-
-//     // 1. Calculate subtotal from items
-//     let subtotal = 0;
-//     for (const item of order.items) {
-//       const product = await Product.findById(item.productId).select('price');
-//       if (!product) throw new Error(`Product not found: ${item.productId}`);
-//       subtotal += product.price * item.quantity;
-//     }
-
-//     // 2. Determine delivery cost (only for home_delivery)
-//     let deliveryCost = 0;
-//     if (order.deliveryInfo.deliveryType === 'home_delivery') {
-//       const delivery = Object.values(deliveryMethod)
-//         .find(m => m.method === order.deliveryInfo.deliveryMethod);
-//       if (delivery) deliveryCost = delivery.cost;
-//     }
-
-//     // 3. Set totalAmount freshly
-//     order.totalAmount = subtotal + deliveryCost;
-
-//     next();
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
+orderSchema.index({ 'paymentDetails.reference': 1 });
+ 
 const Order = mongoose.model('Order', orderSchema);
 
 module.exports = { Order, deliveryMethod };

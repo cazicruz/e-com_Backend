@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { response } = require('../app');
 const {redisClient}= require('../config/redisClient');
+const { ApiError } = require('../utils/apiError');
 // const { verifyBankAccount } = require('../controllers/walletController');
 
 const PAYSTACK_SECRET_KEY =
@@ -23,9 +24,11 @@ const paystack = axios.create({
  * @param {string} purpose
  */
 const initiatePayment = async (amount, email, userId, orderId, purpose = 'Order_Payment') => {
+  const subaccount= process.env.PAYSTACK_SUB_ACCOUNT;
   const response = await paystack.post('/transaction/initialize', {
     email,
     amount,
+    subaccount:subaccount?subaccount:null,
     reference:orderId,
     metadata: {
       userId,
@@ -167,13 +170,13 @@ const ChckPstackTrxnStat = async (reference) => {
   try {
     const response = await paystack.get(`/transaction/verify/${reference}`);
     const data = response.data?.data
-    console.log(data)
+    console.log(data.amount/100)
     const status = data?.status;
     const retries= data?.log?.attempts;
     return {data,status,retries};
   } catch (error) {
     console.error('error checking transaction status', error?.response?.data || error.message);
-    throw new Error('failed to check transaction Status');
+    throw new ApiError(`failed to check transaction Status`,404,{message:`${error?.response?.data?.message||error.message}`});
   }
 };
   

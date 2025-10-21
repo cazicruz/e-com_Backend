@@ -27,16 +27,16 @@ const CreatePaymentOrder = catchAsync(async (req, res, next) => {
 
 
 const verifyPayment = catchAsync(async (req, res) => {
-    const { reference } = req.query;
+    const { reference } = req.body;
     if (!reference) {
         reference = await orderServices.getUserOrders(req.user.id);
     }
-    const status = await ChckPstackTrxnStat(reference);
+    const {data,status} = await ChckPstackTrxnStat(reference);
     if (status === 'success') {
-        await orderServices.updateOrderStatus(reference, 'shipped');
+        await orderServices.updateOrderStatus(reference, 'shipping',data.amount / 100);
         return res.status(200).json({
             status: 'success',
-            message: 'Payment verified and order status updated to shipped'
+            message: 'Payment verified and order status updated to shipping'
         });
     }
     res.status(400).json({
