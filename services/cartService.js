@@ -113,7 +113,7 @@ async function updateItemQuantity(userId, productId, quantity) {
  * @returns {Object} { subtotal, tax, deliveryFee, total }
  */
 async function calculateCartTotals(userId, options = {}) {
-  const { deliveryType = 'home_delivery', deliveryMethod: method = 'standard', taxRate = 0.075 } = options;
+  const { deliveryType = 'home_delivery', deliveryMethod = 'standard', taxRate = 0.075 } = options;
 
   // Fetch user cart with populated product prices
   const cart = await Cart.findOne({ userId }).populate('items.productId', 'price');
@@ -129,12 +129,12 @@ async function calculateCartTotals(userId, options = {}) {
   }
 
   // Tax
-  const tax = subtotal * taxRate;
+  const tax = Math.round(subtotal * taxRate); // ✅ Round to avoid decimals
 
   // Delivery Fee
   let deliveryFee = 0;
   if (deliveryType === 'home_delivery') {
-    deliveryFee = deliveryMethod[method.toUpperCase()]?.cost || 0;
+    deliveryFee = deliveryMethod[deliveryMethod.toUpperCase()]?.cost || 0;
   }
 
   // Final Total

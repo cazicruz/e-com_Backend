@@ -19,7 +19,7 @@ async function createOrderFromCart(userId, orderDetails, initiatePaymentFn) {
     }
 
     // 2. Calculate cart totals (pass options if needed, e.g. deliveryType)
-    const totals = await calculateCartTotals(userId, orderDetails);
+    const totals = await calculateCartTotals(userId, orderDetails.deliveryInfo);
     if (!totals) {
       throw new ApiError('Failed to calculate cart totals',400);
     }

@@ -11,7 +11,7 @@ const CreatePaymentOrder = catchAsync(async (req, res, next) => {
         deliveryInfo: req.body.deliveryInfo,
         billingAddress: req.body.billingAddress,
     }
-    const {order, paymentLink } = await orderServices.createOrderFromCart(req.user.id,orderDetails, initiatePayment);
+    const {order, paymentLink } = await orderServices.createOrderFromCart(req.user._id,orderDetails, initiatePayment);
     if (!order) {
         return next(new ApiError(400, 'Could not create order'));
     }
