@@ -1,6 +1,7 @@
 const Router = require('express').Router();
 const { 
     addItem,
+    addItemBulk,
     removeItem,
     clearUserCart,
     getUserCart,
@@ -19,6 +20,7 @@ const {
 Router.use(authenticateToken);
 
 Router.post('/add', addItemSchema, addItem);
+Router.post('/add-bulk', addItemBulk);
 Router.delete('/remove', removeItemSchema, removeItem);
 Router.delete('/clear', clearUserCart);
 Router.get('/', getUserCart);

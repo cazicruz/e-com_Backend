@@ -30,6 +30,34 @@ async function addItemToCart(userId, productId, quantity) {
     return userCart;
 }
 
+async function addToCartBulk(userId, items) {
+    let userCart = await Cart.findOne({ userId });
+    if (!userCart) {
+        userCart = new Cart({ userId, items: [] });
+    }
+
+    for (const item of items) {
+        const { productId, quantity } = item;
+        const validProduct = await Product.findById(productId);
+        if (!validProduct) throw new ApiError('Invalid Product', 404);
+        if (validProduct.stockQuantity < 1) throw new ApiError('Product out of Stock', 422);
+
+        const existingItem = userCart.items.find(item => item.productId.equals(productId));
+        if (existingItem) {
+            const newQuantity = Number(existingItem.quantity) + Number(quantity);
+            if (newQuantity > validProduct.stockQuantity) {
+                throw new ApiError('Insufficient stock', 422);
+            }
+            existingItem.quantity = newQuantity;
+        } else {
+            userCart.items.push({ productId, quantity });
+        }
+    }
+
+    await userCart.save();
+    return userCart;
+}
+
 async function removeItemFromCart(userId, productId) {
     const userCart = await Cart.findOne({ userId });
     if (!userCart) throw new ApiError('Cart not found', 404);
@@ -85,7 +113,7 @@ async function updateItemQuantity(userId, productId, quantity) {
  * @returns {Object} { subtotal, tax, deliveryFee, total }
  */
 async function calculateCartTotals(userId, options = {}) {
-  const { deliveryType = 'home_delivery', deliveryMethod: method = 'standard', taxRate = 0 } = options;
+  const { deliveryType = 'home_delivery', deliveryMethod: method = 'standard', taxRate = 0.075 } = options;
 
   // Fetch user cart with populated product prices
   const cart = await Cart.findOne({ userId }).populate('items.productId', 'price');
@@ -123,6 +151,7 @@ async function calculateCartTotals(userId, options = {}) {
 
 module.exports = {
     addItemToCart,
+    addToCartBulk,
     removeItemFromCart,
     clearCart,
     getCart,
