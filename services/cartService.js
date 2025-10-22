@@ -134,7 +134,7 @@ async function calculateCartTotals(userId, options = {}) {
   // Delivery Fee
   let deliveryFee = 0;
   if (deliveryType === 'home_delivery') {
-    deliveryFee = delivery_Method[delivery_Method.toUpperCase()]?.cost || 0;  
+    deliveryFee = deliveryMethod[delivery_Method.toUpperCase()]?.cost || 0;  
   }
 
   // Final Total
