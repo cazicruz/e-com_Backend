@@ -17,7 +17,7 @@ const {
     updateQuantitySchema
 } = require('../../middleware/validations/cartValidation');
 
-Router.use(authenticateToken);
+// Router.use(authenticateToken);
 
 Router.post('/add', addItemSchema, addItem);
 Router.post('/add-bulk', addItemBulk);

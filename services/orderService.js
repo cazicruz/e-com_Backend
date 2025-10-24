@@ -4,15 +4,22 @@ const { calculateCartTotals } = require('../services/cartService');
 const { ApiError } = require('../utils/apiError');
 const mongoose = require('mongoose');
 
-async function createOrderFromCart(userId, orderDetails, initiatePaymentFn) {
+async function createOrderFromCart(cartId,userId, orderDetails, initiatePaymentFn) {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     // 1. Fetch the user's cart (inside the transaction)
-    const userCart = await Cart.findOne({ userId })
+    let userCart;
+    if(userId) {
+      userCart = await Cart.findOne({ userId })
       .populate('items.productId')
       .session(session);
+    }else{
+      userCart = await Cart.findById(cartId)
+      .populate('items.productId')
+      .session(session);
+    }
 
     if (!userCart || userCart.items.length === 0) {
       throw new ApiError('Cart is empty',404);

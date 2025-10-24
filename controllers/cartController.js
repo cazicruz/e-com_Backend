@@ -11,9 +11,9 @@ const {ApiError} = require('../utils/apiError');
 const {calculateCartTotals} = require('../services/cartService')
 
 const addItem = catchAsync(async (req, res, next) => {
-    const { productId, quantity } = req.body;
-    const userId = req.user._id;
-    const result = await addItemToCart(userId, productId, quantity);
+    const {cartId, productId, quantity } = req.body;
+    // const userId = req.user._id;
+    const result = await addItemToCart(cartId, productId, quantity);
     res.status(200).json({
         status: 'success',
         message: 'Item added to cart successfully',
@@ -26,8 +26,7 @@ const addItem = catchAsync(async (req, res, next) => {
 
 const addItemBulk = catchAsync(async (req, res, next) => {
     const { items } = req.body;
-    const userId = req.user._id;
-    const result = await addToCartBulk(userId, items);
+    const result = await addToCartBulk(cartId, items);
     res.status(200).json({
         status: 'success',
         message: 'cart synced successfully',
@@ -39,8 +38,8 @@ const addItemBulk = catchAsync(async (req, res, next) => {
 
 const removeItem = catchAsync(async (req, res, next) => {
     const { productId } = req.body;
-    const userId = req.user._id;
-    const result = await removeItemFromCart(userId, productId);
+    const cartId = req.body.cartId;
+    const result = await removeItemFromCart(cartId, productId);
     res.status(200).json({
         status: 'success',
         message: 'Item removed from cart successfully',
@@ -51,8 +50,8 @@ const removeItem = catchAsync(async (req, res, next) => {
 });
 
 const clearUserCart = catchAsync(async (req, res, next) => {
-    const userId = req.user._id;
-    const result = await clearCart(userId);
+    const cartId = req.body.cartId;
+    const result = await clearCart(cartId);
     res.status(200).json({
         status: 'success',
         message: 'Cart cleared successfully',
@@ -63,8 +62,8 @@ const clearUserCart = catchAsync(async (req, res, next) => {
 });
 
 const getUserCart = catchAsync(async (req, res, next) => {
-    const userId = req.user._id;
-    const result = await getCart(userId);
+    const cartId = req.params.cartId || req.user.cartId;
+    const result = await getCart(cartId);
     res.status(200).json({
         status: 'success',
         message: 'Cart retrieved successfully',
@@ -75,9 +74,8 @@ const getUserCart = catchAsync(async (req, res, next) => {
 });
 
 const updateQuantity = catchAsync(async (req, res, next) => {
-    const { productId, quantity } = req.body;
-    const userId = req.user._id;
-    const result = await updateItemQuantity(userId, productId, quantity);
+    const { cartId, productId, quantity } = req.body;
+    const result = await updateItemQuantity(cartId, productId, quantity);
     res.status(200).json({
         status: 'success',
         message: 'Item quantity updated successfully',
@@ -88,8 +86,8 @@ const updateQuantity = catchAsync(async (req, res, next) => {
 });
 
 const calculateCartTotal = catchAsync(async (req, res, next) => {
-    const userId = req.user._id;
-    const totals = await calculateCartTotals(userId);
+    const cartId = req.params.cartId || req.user.cartId;
+    const totals = await calculateCartTotals(cartId);
     res.status(200).json({
         status: 'success',
         message: 'Cart totals calculated successfully',
