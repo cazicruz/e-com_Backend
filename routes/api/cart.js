@@ -23,7 +23,7 @@ Router.post('/add', addItemSchema, addItem);
 Router.post('/add-bulk', addItemBulk);
 Router.delete('/remove', removeItemSchema, removeItem);
 Router.delete('/clear', clearUserCart);
-Router.get('/:id', getUserCart);
+Router.get('/', getUserCart);
 Router.patch('/update-quantity', updateQuantitySchema, updateQuantity);
 Router.get('/calculate-total', calculateCartTotal);
 
