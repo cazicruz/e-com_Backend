@@ -12,7 +12,6 @@ const {calculateCartTotals} = require('../services/cartService')
 
 const addItem = catchAsync(async (req, res, next) => {
     const {cartId, productId, quantity } = req.body;
-    // const userId = req.user._id;
     const result = await addItemToCart(cartId, productId, quantity);
     res.status(200).json({
         status: 'success',
@@ -23,9 +22,8 @@ const addItem = catchAsync(async (req, res, next) => {
     });
 });
 
-
 const addItemBulk = catchAsync(async (req, res, next) => {
-    const { items } = req.body;
+    const { cartId, items } = req.body; // ✅ Add cartId
     const result = await addToCartBulk(cartId, items);
     res.status(200).json({
         status: 'success',
@@ -37,8 +35,7 @@ const addItemBulk = catchAsync(async (req, res, next) => {
 });
 
 const removeItem = catchAsync(async (req, res, next) => {
-    const { productId } = req.body;
-    const cartId = req.body.cartId;
+    const { cartId, productId } = req.body; // ✅ Get both from body
     const result = await removeItemFromCart(cartId, productId);
     res.status(200).json({
         status: 'success',
@@ -50,7 +47,7 @@ const removeItem = catchAsync(async (req, res, next) => {
 });
 
 const clearUserCart = catchAsync(async (req, res, next) => {
-    const cartId = req.body.cartId;
+    const { cartId } = req.body;
     const result = await clearCart(cartId);
     res.status(200).json({
         status: 'success',
@@ -62,7 +59,7 @@ const clearUserCart = catchAsync(async (req, res, next) => {
 });
 
 const getUserCart = catchAsync(async (req, res, next) => {
-    const cartId = req.params.cartId || req.user.cartId;
+    const cartId = req.query.id || req.params.id; // ✅ Get from query params
     const result = await getCart(cartId);
     res.status(200).json({
         status: 'success',
@@ -86,7 +83,7 @@ const updateQuantity = catchAsync(async (req, res, next) => {
 });
 
 const calculateCartTotal = catchAsync(async (req, res, next) => {
-    const cartId = req.params.cartId || req.user.cartId;
+    const cartId = req.query.cartId; // ✅ Get from query params
     const totals = await calculateCartTotals(cartId);
     res.status(200).json({
         status: 'success',
@@ -96,7 +93,6 @@ const calculateCartTotal = catchAsync(async (req, res, next) => {
         }
     });
 });
-
 
 module.exports = {
     addItem,
