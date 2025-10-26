@@ -12,6 +12,7 @@ router.use(authenticateToken);
 
 router.post('/',CreatePaymentOrder);
 router.post('/verifypayment',verifyPayment);
+//admin route
 router.get('/',orderController.getAllOrders);
 router.get('/user',orderController.getUserOrders);
 router.patch('/status',orderController.updateOrderStatus);

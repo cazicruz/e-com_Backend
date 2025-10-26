@@ -3,6 +3,8 @@ const Cart = require('../models/Cart');
 const { calculateCartTotals } = require('../services/cartService');
 const { ApiError } = require('../utils/apiError');
 const mongoose = require('mongoose');
+const paginate = require('../utils/paginate');
+
 
 async function createOrderFromCart(cartId,userId, orderDetails, initiatePaymentFn) {
   const session = await mongoose.startSession();
@@ -133,6 +135,10 @@ async function getAllOrders() {
     return orders;
 }
 
+async function paginateOrders(filter, options) {
+  return await paginate(Order, filter, options);
+}
+
 async function deleteOrder(orderId) {
     const order = await Order.findByIdAndDelete(orderId);
     if (!order) {
@@ -158,5 +164,6 @@ module.exports = {
   softDeleteOrder,
   deleteOrder,
   getAllOrders,
+  paginateOrders,
   updateOrderStatus,
 };
