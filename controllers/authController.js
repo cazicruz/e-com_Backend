@@ -16,7 +16,7 @@ const catchAsync = require('../utils/catchAsync');
 // @route   POST /api/auth/register
 // @access  Public
 const register = catchAsync(async (req, res, next) => {
-  const { email, phone, password, referralCode } = req.body;
+  const { email, phone, password, address, referralCode } = req.body;
   const deviceInfo = req.headers['user-agent'];
   const ip = req.ip;
 
@@ -48,6 +48,7 @@ const register = catchAsync(async (req, res, next) => {
     email,
     phone,
     password,
+    address,
     referralCode: newReferralCode,
     referredBy
   });

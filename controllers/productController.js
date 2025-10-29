@@ -117,10 +117,10 @@ const getProductByIdController = catchAsync(async (req, res) => {
 })
 
 const getAllProductsController = catchAsync(async (req, res) => {
-    const filter = {};
+    const {filter} = req.query || {};
     const options = {
-        page: req.query.page || 1,
-        limit: req.query.limit || 10,
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 10,
         sort: req.query.sort || 'createdAt',
         populate: req.query.populate || ''
     };
