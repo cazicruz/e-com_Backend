@@ -123,7 +123,7 @@ async function getOrderById(orderId) {
 }
 
 async function getUserOrders(userId) {
-    const orders = await Order.find({ userId, isDeleted: false })
+    const orders = await Order.find({ userId, isDeleted: false }).populate('items.productId');
     if (!orders || orders.length === 0) {
         throw new ApiError('No orders found for this user', 404);
     }
