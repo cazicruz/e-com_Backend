@@ -13,22 +13,23 @@ async function createOrderFromCart(cartId,userId, orderDetails, initiatePaymentF
   try {
     // 1. Fetch the user's cart (inside the transaction)
     let userCart;
-    if(userId) {
-      userCart = await Cart.findOne({ userId })
+    if(cartId) {
+      userCart = await Cart.findById(cartId)
       .populate('items.productId')
       .session(session);
     }else{
-      userCart = await Cart.findById(cartId)
+      userCart = await Cart.findOne({ userId })
       .populate('items.productId')
       .session(session);
     }
 
     if (!userCart || userCart.items.length === 0) {
+      console.log(userCart)
       throw new ApiError('Cart is empty',404);
     }
 
     // 2. Calculate cart totals (pass options if needed, e.g. deliveryType)
-    const totals = await calculateCartTotals(userId, orderDetails.deliveryInfo);
+    const totals = await calculateCartTotals(cartId,userId, orderDetails.deliveryInfo);
     if (!totals) {
       throw new ApiError('Failed to calculate cart totals',400);
     }
@@ -139,7 +140,7 @@ async function paginateOrders(filter, options) {
   return await paginate(Order, filter, options);
 }
 
-async function deleteOrder(orderId) {
+async function deleteOrder(orderId) { 
     const order = await Order.findByIdAndDelete(orderId);
     if (!order) {
         throw new ApiError('Order not found',404);
