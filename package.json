@@ -4,7 +4,7 @@
   "description": "B-Classy e-comm Application Backend",
   "private": true,
   "scripts": {
-    "start":  "concurrently \"nodemon app.js\" \"npm run start-worker\"",
+    "start":  "concurrently \"node app.js\" \"npm run start-worker\"",
     "start-worker": "node -r dotenv/config workers/algoliaWorker.js",
     "dev": "concurrently \"nodemon app.js\" \"npm run start-worker\"",
     "setup": "node setup.js",
