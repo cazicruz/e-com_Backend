@@ -67,6 +67,11 @@ productSchema.post("findOneAndDelete", async function (doc) {
     await algoliaQueue.add("delete", { id: doc._id.toString() });
   }
 });
+productSchema.post("findByIdAndDelete", async function (doc) {
+  if (doc) {
+    await algoliaQueue.add("delete", { id: doc._id.toString() });
+  }
+});
 
 productSchema.pre("deleteOne", { document: false, query: true }, async function (next) {
   this._docToDelete = await this.model.findOne(this.getFilter(), "_id").lean();
