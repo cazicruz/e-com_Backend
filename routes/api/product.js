@@ -21,10 +21,10 @@ const {
     changeProductPopularityController,
     updateProductImagesController} = require('../../controllers/productController');
 
-    router.post('/', upload.array('images'),validateProduct, createProductController);
+    router.post('/', upload.array('fImages'),validateProduct, createProductController);
     router.get('/', getAllProductsController);
     router.delete('/bulk', bulkDeleteProductsController);
-    router.put('/:id', upload.array('images'),validateProduct, updateProductController);
+    router.put('/:id', upload.array('fImages'),validateProduct, updateProductController);
     router.delete('/:id',idParamValidator, deleteProductController);
     router.get('/:id',idParamValidator, getProductByIdController);
     router.patch('/:id/stock',validateStock, changeProductStockController);
