@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
   },
+  fullName:{
+    type:String,
+  },
   phone: {
     type: String,
     required: [true, 'Phone number is required'],
@@ -33,10 +36,7 @@ const userSchema = new mongoose.Schema({
     default: true
   },
   address: {
-    street: String,
-    city: String,
-    state: String,
-    postalCode: String
+    type:String,
   },
   cart:{
     ref: 'Cart',
