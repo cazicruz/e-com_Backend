@@ -12,6 +12,8 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const {connectRedis} = require('./config/redisClient');
+const pingServer = require('./utils/pingServer');
+const cron = require('node-cron');
 
 // Import database connection
 const connectDB = require('./config/database');
@@ -166,6 +168,7 @@ const startServer = async () => {
     const domain = process.env.BASE_URL || "localhost";
     app.listen(PORT, () => {
       console.log(`✅ Server is running on port ${domain}:${PORT}`);
+      cron.schedule('*/30 * * * *', pingServer);
     });
   } catch (err) {
     console.error('❌ Failed to start server:', err);
